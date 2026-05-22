@@ -769,6 +769,9 @@ class DiffusionPipeline(ConfigMixin, PushToHubMixin):
         revision = kwargs.pop("revision", None)
         from_flax = kwargs.pop("from_flax", False)
         torch_dtype = kwargs.pop("torch_dtype", None)
+        # _my_debug_: 打印用户传入的 torch_dtype (用户参数优先级最高!)
+        logger.info(f"_my_debug_ [STEP 1] pipeline_utils.py::from_pretrained() - 用户传入 torch_dtype={torch_dtype}")
+        logger.info(f"_my_debug_ [重要] 用户传入的 torch_dtype 参数 > config.json 中的 torch_dtype (用户参数优先!)")
         custom_pipeline = kwargs.pop("custom_pipeline", None)
         custom_revision = kwargs.pop("custom_revision", None)
         provider = kwargs.pop("provider", None)
@@ -1054,6 +1057,8 @@ class DiffusionPipeline(ConfigMixin, PushToHubMixin):
                     if isinstance(torch_dtype, dict)
                     else torch_dtype
                 )
+                # _my_debug_: 打印传递给子模型的 dtype
+                logger.info(f"_my_debug_ [STEP 2] pipeline_utils.py::from_pretrained() - 为子模型 '{name}' 分配 sub_model_dtype={sub_model_dtype}")
                 loaded_sub_model = load_sub_model(
                     library_name=library_name,
                     class_name=class_name,

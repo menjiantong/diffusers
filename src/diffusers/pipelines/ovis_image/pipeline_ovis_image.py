@@ -208,6 +208,13 @@ class OvisImagePipeline(
         device = device or self._execution_device
         dtype = dtype or self.text_encoder.dtype
 
+        # _my_debug_: 打印 text_encoder 的权重类型
+        logger.info(f"_my_debug_ text_encoder dtype: {self.text_encoder.dtype}")
+        # _my_debug_: 打印 text_encoder 第一个参数的类型
+        for name, param in self.text_encoder.named_parameters():
+            logger.info(f"_my_debug_ text_encoder param '{name}' dtype: {param.dtype}")
+            break
+
         messages = self._get_messages(prompt)
         batch_size = len(messages)
 
@@ -226,6 +233,8 @@ class OvisImagePipeline(
             attention_mask=attention_mask,
         )
         prompt_embeds = outputs.last_hidden_state
+        # _my_debug_: 打印 prompt_embeds 的类型
+        logger.info(f"_my_debug_ prompt_embeds (last_hidden_state) dtype: {prompt_embeds.dtype}")
         prompt_embeds = prompt_embeds * attention_mask[..., None]
         prompt_embeds = prompt_embeds[:, self.user_prompt_begin_id :, :]
 
@@ -553,6 +562,8 @@ class OvisImagePipeline(
 
         # 4. Prepare latent variables
         num_channels_latents = self.transformer.config.in_channels // 4
+        # _my_debug_: 打印 transformer.x_embedder.weight 的类型
+        logger.info(f"_my_debug_ transformer.x_embedder.weight dtype: {self.transformer.x_embedder.weight.dtype}")
         latents, latent_image_ids = self.prepare_latents(
             batch_size * num_images_per_prompt,
             num_channels_latents,
@@ -563,6 +574,8 @@ class OvisImagePipeline(
             generator,
             latents,
         )
+        # _my_debug_: 打印 latents 的类型
+        logger.info(f"_my_debug_ latents dtype: {latents.dtype}")
 
         # 5. Prepare timesteps
         sigmas = np.linspace(1.0, 1 / num_inference_steps, num_inference_steps) if sigmas is None else sigmas

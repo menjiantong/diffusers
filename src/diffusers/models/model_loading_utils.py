@@ -228,13 +228,24 @@ def load_model_dict_into_meta(
     This is somewhat similar to `_load_state_dict_into_model`, but deals with a model that has some or all of its
     params on a `meta` device. It replaces the model params with the data from the `state_dict`
     """
+    # _my_debug_: 进入函数
+    logger.info(f"_my_debug_ [STEP A] model_loading_utils.py::load_model_dict_into_meta() - 开始加载权重到模型")
+    logger.info(f"_my_debug_ [STEP A] model_loading_utils.py::load_model_dict_into_meta() - 目标 dtype={dtype}")
+    logger.info(f"_my_debug_ [重要] 用户传入的 torch_dtype 参数 > config.json 中的 torch_dtype (正在执行转换!)")
 
     is_quantized = hf_quantizer is not None
     empty_state_dict = model.state_dict()
 
+    # _my_debug_: 统计转换情况
+    conversion_count = 0
+    first_conversion_logged = False
+
     for param_name, param in state_dict.items():
         if param_name not in empty_state_dict:
             continue
+
+        # _my_debug_: 记录原始参数的 dtype
+        original_dtype = param.dtype
 
         set_module_kwargs = {}
         # We convert floating dtypes to the `dtype` passed. We also want to keep the buffers/params
@@ -250,6 +261,14 @@ def load_model_dict_into_meta(
             elif hf_quantizer is not None and param.dtype == getattr(torch, "float8_e4m3fn", None):
                 pass
             else:
+                # _my_debug_: 打印 dtype 转换 (只打印前几个，避免日志太多)
+                if original_dtype != dtype:
+                    conversion_count += 1
+                    if not first_conversion_logged:
+                        logger.info(f"_my_debug_ [STEP B] model_loading_utils.py::load_model_dict_into_meta() - 执行 dtype 转换!")
+                        logger.info(f"_my_debug_ [STEP B] model_loading_utils.py::load_model_dict_into_meta() - param.to({dtype}) 将 {original_dtype} -> {dtype}")
+                        logger.info(f"_my_debug_ [STEP B] 第一个转换的参数: '{param_name}' from {original_dtype} to {dtype}")
+                        first_conversion_logged = True
                 param = param.to(dtype)
                 set_module_kwargs["dtype"] = dtype
 
@@ -305,6 +324,11 @@ def load_model_dict_into_meta(
             )
         else:
             set_module_tensor_to_device(model, param_name, param_device, value=param, **set_module_kwargs)
+
+    # _my_debug_: 打印转换统计
+    logger.info(f"_my_debug_ [STEP C] model_loading_utils.py::load_model_dict_into_meta() - 权重加载完成")
+    logger.info(f"_my_debug_ [STEP C] model_loading_utils.py::load_model_dict_into_meta() - 共转换 {conversion_count} 个参数从 float32 到 {dtype}")
+    logger.info(f"_my_debug_ [重要] 用户传入的 torch_dtype 参数 > config.json 中的 torch_dtype (转换完成!)")
 
     return offload_index, state_dict_index
 

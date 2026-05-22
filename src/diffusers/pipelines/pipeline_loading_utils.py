@@ -785,6 +785,28 @@ def load_sub_model(
     """Helper method to load the module `name` from `library_name` and `class_name`"""
     from ..quantizers import PipelineQuantizationConfig
 
+    # _my_debug_: 打印传入的 torch_dtype
+    logger.info(f"_my_debug_ [STEP 3] pipeline_loading_utils.py::load_sub_model() - 开始加载子模型 name={name}, class_name={class_name}")
+    logger.info(f"_my_debug_ [STEP 3] pipeline_loading_utils.py::load_sub_model() - 传入的 torch_dtype={torch_dtype}")
+
+    # _my_debug_: 尝试读取 config.json 中的 torch_dtype
+    config_path = None
+    if os.path.isdir(os.path.join(cached_folder, name)):
+        config_path = os.path.join(cached_folder, name, "config.json")
+    else:
+        config_path = os.path.join(cached_folder, "config.json")
+    if config_path and os.path.exists(config_path):
+        import json
+        try:
+            with open(config_path, "r") as f:
+                config_data = json.load(f)
+                config_torch_dtype = config_data.get("torch_dtype", "not found")
+                logger.info(f"_my_debug_ [STEP 3] pipeline_loading_utils.py::load_sub_model() - config.json 中 torch_dtype={config_torch_dtype}")
+                if config_torch_dtype != "not found" and torch_dtype is not None:
+                    logger.info(f"_my_debug_ [重要对比] 用户参数 torch_dtype={torch_dtype} > config.json torch_dtype={config_torch_dtype} (使用用户参数!)")
+        except Exception as e:
+            logger.info(f"_my_debug_ [STEP 3] pipeline_loading_utils.py::load_sub_model() - 读取 config.json 失败: {e}")
+
     # retrieve class candidates
 
     class_obj, class_candidates = get_class_obj_and_candidates(
@@ -842,8 +864,10 @@ def load_sub_model(
     if issubclass(class_obj, torch.nn.Module):
         if is_transformers_model and transformers_version >= version.parse("4.56.0"):
             loading_kwargs["dtype"] = torch_dtype
+            logger.info(f"_my_debug_ [STEP 4] pipeline_loading_utils.py::load_sub_model() - transformers>=4.56.0, 使用 loading_kwargs['dtype']={torch_dtype}")
         else:
             loading_kwargs["torch_dtype"] = torch_dtype
+            logger.info(f"_my_debug_ [STEP 4] pipeline_loading_utils.py::load_sub_model() - 使用 loading_kwargs['torch_dtype']={torch_dtype}")
     if issubclass(class_obj, diffusers_module.OnnxRuntimeModel):
         loading_kwargs["provider"] = provider
         loading_kwargs["sess_options"] = sess_options
@@ -903,6 +927,10 @@ def load_sub_model(
             loading_kwargs["quantization_config"] = model_quant_config
 
     # check if the module is in a subdirectory
+    # _my_debug_: 打印即将调用的加载方法
+    logger.info(f"_my_debug_ [STEP 5] pipeline_loading_utils.py::load_sub_model() - 调用 {class_obj.__name__}.from_pretrained()")
+    logger.info(f"_my_debug_ [STEP 5] pipeline_loading_utils.py::load_sub_model() - loading_kwargs 中的 dtype 相关参数: {[(k, v) for k, v in loading_kwargs.items() if 'dtype' in k.lower()]}")
+
     if dduf_entries:
         loading_kwargs["dduf_entries"] = dduf_entries
         loaded_sub_model = load_method(name, **loading_kwargs)
@@ -911,6 +939,15 @@ def load_sub_model(
     else:
         # else load from the root directory
         loaded_sub_model = load_method(cached_folder, **loading_kwargs)
+
+    # _my_debug_: 打印加载后的模型 dtype
+    if isinstance(loaded_sub_model, torch.nn.Module):
+        logger.info(f"_my_debug_ [STEP 6] pipeline_loading_utils.py::load_sub_model() - 加载完成 name={name}")
+        logger.info(f"_my_debug_ [STEP 6] pipeline_loading_utils.py::load_sub_model() - 模型最终 dtype={loaded_sub_model.dtype}")
+        # _my_debug_: 打印第一个参数的 dtype
+        for param_name, param in loaded_sub_model.named_parameters():
+            logger.info(f"_my_debug_ [STEP 6] pipeline_loading_utils.py::load_sub_model() - 第一个参数 '{param_name}' dtype={param.dtype}")
+            break
 
     if isinstance(loaded_sub_model, torch.nn.Module) and isinstance(device_map, dict) and not use_flashpack:
         # remove hooks

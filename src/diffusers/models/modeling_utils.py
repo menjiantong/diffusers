@@ -1002,6 +1002,9 @@ class ModelMixin(torch.nn.Module, PushToHubMixin):
         token = kwargs.pop("token", None)
         revision = kwargs.pop("revision", None)
         torch_dtype = kwargs.pop("torch_dtype", None)
+        # _my_debug_: 打印进入 from_pretrained
+        logger.info(f"_my_debug_ [STEP 7] modeling_utils.py::ModelMixin.from_pretrained() - 开始加载 diffusers 模型")
+        logger.info(f"_my_debug_ [STEP 7] modeling_utils.py::ModelMixin.from_pretrained() - 接收的 torch_dtype={torch_dtype}")
         subfolder = kwargs.pop("subfolder", None)
         device_map = kwargs.pop("device_map", None)
         max_memory = kwargs.pop("max_memory", None)
@@ -1304,6 +1307,9 @@ class ModelMixin(torch.nn.Module, PushToHubMixin):
                 raise ValueError(
                     f"{torch_dtype} needs to be of type `torch.dtype`, e.g. `torch.float16`, but is {type(torch_dtype)}."
                 )
+            # _my_debug_: 设置默认 dtype
+            logger.info(f"_my_debug_ [STEP 8] modeling_utils.py::ModelMixin.from_pretrained() - 设置默认 torch_dtype={torch_dtype}")
+            logger.info(f"_my_debug_ [重要] 用户传入的 torch_dtype 参数 > config.json 中的 torch_dtype (设置默认 dtype)")
             dtype_orig = cls._set_default_torch_dtype(torch_dtype)
 
         init_contexts = [no_init_weights()]
@@ -1378,6 +1384,10 @@ class ModelMixin(torch.nn.Module, PushToHubMixin):
         )
         if hf_quantizer is not None:
             hf_quantizer.validate_environment(device_map=device_map)
+
+        # _my_debug_: 调用 _load_pretrained_model
+        logger.info(f"_my_debug_ [STEP 9] modeling_utils.py::ModelMixin.from_pretrained() - 调用 _load_pretrained_model")
+        logger.info(f"_my_debug_ [STEP 9] modeling_utils.py::ModelMixin.from_pretrained() - 传递 dtype={torch_dtype}")
 
         (
             model,

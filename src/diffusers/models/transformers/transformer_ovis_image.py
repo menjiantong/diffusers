@@ -506,7 +506,13 @@ class OvisImageTransformer2DModel(
             If `return_dict` is True, an [`~models.transformer_2d.Transformer2DModelOutput`] is returned, otherwise a
             `tuple` where the first element is the sample tensor.
         """
+        # _my_debug_: 打印输入 hidden_states 的类型
+        logger.info(f"_my_debug_ transformer forward input hidden_states dtype: {hidden_states.dtype}")
+        # _my_debug_: 打印 encoder_hidden_states 的类型
+        logger.info(f"_my_debug_ transformer forward encoder_hidden_states dtype: {encoder_hidden_states.dtype}")
         hidden_states = self.x_embedder(hidden_states)
+        # _my_debug_: 打印经过 x_embedder 后的 hidden_states 类型
+        logger.info(f"_my_debug_ transformer forward after x_embedder hidden_states dtype: {hidden_states.dtype}")
 
         timestep = timestep.to(hidden_states.dtype) * 1000
 
