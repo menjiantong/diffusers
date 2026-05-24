@@ -931,7 +931,7 @@ def load_sub_model(
     logger.info(f"_my_debug_ [STEP 5] pipeline_loading_utils.py::load_sub_model() - 调用 {class_obj.__name__}.from_pretrained()")
     logger.info(f"_my_debug_ [STEP 5] pipeline_loading_utils.py::load_sub_model() - loading_kwargs 中的 dtype 相关参数: {[(k, v) for k, v in loading_kwargs.items() if 'dtype' in k.lower()]}")
 
-    logger.info(f"_my_debug_ [STEP 5.1] pipeline_loading_utils.py::load_sub_model() - loaded_sub_model is {loaded_sub_model.__name__} ")
+    logger.info(f"_my_debug_ [STEP 5.1] pipeline_loading_utils.py::load_sub_model() - load_method is {load_method.__name__} ")
 
 
     if dduf_entries:
