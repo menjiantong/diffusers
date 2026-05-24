@@ -20,8 +20,9 @@ from typing import TYPE_CHECKING
 from huggingface_hub import DDUFEntry
 from tqdm import tqdm
 
-from ..utils import is_safetensors_available, is_transformers_available, is_transformers_version
+from ..utils import is_safetensors_available, is_transformers_available, is_transformers_version, logging
 
+logger = logging.get_logger(__name__)
 
 if TYPE_CHECKING:
     from transformers import PreTrainedModel, PreTrainedTokenizer
@@ -65,6 +66,8 @@ def _load_transformers_model_from_dduf(
     In practice, `transformers` do not provide a way to load a model from a DDUF archive. This function is a workaround
     by instantiating a model from the config file and loading the weights from the DDUF archive directly.
     """
+    logger.info(f"_my_debug_ [STEP 5.5] _load_transformers_model_from_dduf -name is {name}, file is {name}/config.json  dduf_entries 相关参数: {dduf_entries}")
+
     config_file = dduf_entries.get(f"{name}/config.json")
     if config_file is None:
         raise EnvironmentError(
@@ -77,6 +80,8 @@ def _load_transformers_model_from_dduf(
         for entry_name, entry in dduf_entries.items()
         if entry_name.startswith(f"{name}/") and entry_name.endswith(".safetensors")
     ]
+    logger.info(f"_my_debug_ [STEP 5.5] _load_transformers_model_from_dduf -weight_files is {weight_files}")
+
     if not weight_files:
         raise EnvironmentError(
             f"Could not find any weight file for component {name} in DDUF file (contains {dduf_entries.keys()})."
@@ -95,6 +100,8 @@ def _load_transformers_model_from_dduf(
         from transformers import AutoConfig, GenerationConfig
 
         tmp_config_file = os.path.join(tmp_dir, "config.json")
+        logger.info(f"_my_debug_ [STEP 5.5] _load_transformers_model_from_dduf - tmp_config_file is {tmp_config_file}")
+
         with open(tmp_config_file, "w") as f:
             f.write(config_file.read_text())
         config = AutoConfig.from_pretrained(tmp_config_file)

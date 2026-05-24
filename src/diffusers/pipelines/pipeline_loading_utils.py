@@ -931,10 +931,15 @@ def load_sub_model(
     logger.info(f"_my_debug_ [STEP 5] pipeline_loading_utils.py::load_sub_model() - 调用 {class_obj.__name__}.from_pretrained()")
     logger.info(f"_my_debug_ [STEP 5] pipeline_loading_utils.py::load_sub_model() - loading_kwargs 中的 dtype 相关参数: {[(k, v) for k, v in loading_kwargs.items() if 'dtype' in k.lower()]}")
 
+    logger.info(f"_my_debug_ [STEP 5.1] pipeline_loading_utils.py::load_sub_model() - loaded_sub_model is {loaded_sub_model} ")
+
+
     if dduf_entries:
+        logger.info(f"_my_debug_ [STEP 5.1] pipeline_loading_utils.py::load_sub_model() - 进入dduf_entires")
         loading_kwargs["dduf_entries"] = dduf_entries
         loaded_sub_model = load_method(name, **loading_kwargs)
     elif os.path.isdir(os.path.join(cached_folder, name)):
+        logger.info(f"_my_debug_ [STEP 5.1] pipeline_loading_utils.py::load_sub_model() - 进入dduf_entires")
         loaded_sub_model = load_method(os.path.join(cached_folder, name), **loading_kwargs)
     else:
         # else load from the root directory
